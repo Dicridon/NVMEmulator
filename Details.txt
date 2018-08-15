@@ -1,9 +1,55 @@
-This file describe how I design and implement the NVM emulator
+This file describe how I design and implement the NVM emulator.
+
+This is the first time I write kernel module, and no hints are offered as in university.
+
+I intended to divide this kernel module into several files so that they form
+a good project, but Makefiles sucks. I searched on Google but got no solution to
+make my Makefile (it compiles my code to something that I do not want) work, so I
+eventually join those files together into one file larger_header.h, which is
+unbearably ugly. Though Makefile sucks, the functionality of larger_header.h is the
+same as other files documented in README. You may read README to know what
+large_header.h offers.
 
 1. Design
    The emulator consist of only one kernel module which will create a kernel thread
-   polling PMU counter that counts memory access. If the counter has value greater
+   polling PMU counter that counts memory reads. If the counter has value greater
    than certain value predefined, the kernel thread would generate an IPI to
    interrupt the excution of a process on certain CPU (cpu 12 as predefined).
 
-2. Implementation
+2. Tools
+   This implementation is based on Intel Xeon E5 v4. Actually a senior student of
+   my supervisor developed an emulator based on Intel Xeon E5 v3, but we failed to
+   port it to E5 v4, so I rewrite this much simpler but working version of emulator.
+
+   Recall the design is we have to count memory reads and send IPI to interrupt
+   executing process on certain cpu so that the process can be slowed as if it is
+   runing on NVM, which is ususally 2 to 4 times slower than DRAM.
+
+   To count memory reads, I make use of Intel Xeon uncore per socket PMU, which
+   contain a set of registers offering performance monitoring utilities. There is a
+   box (that's what Intel developers call the units inside a socket) named
+   Home Agent box, which offer memory access request counting utility. It may count
+   local reads and writes, as well as remote reads and writes(inter socket memory
+   access).
+
+   So generate IPI, I make use of Linux kernel function smp_call_function_single.
+
+3. Implementation
+   There are two set of registers in PMU, one resides in MSR space while the other
+   one resides in PCICFG space. Home Agent belongs to the former one.
+   To manipulate pcicfg registers, I use functions like pci_bus_read/write fuctions
+   in linux/pci.h. You may find information about bus number, device numbe function
+   number and registers offset of those PMU boxes and PMU registers in handbook
+   xeon-e5-e7-v4-uncore-performance-monitor.pdf under directory references/.
+
+   As for IPI, just use smp_call_function_single to execute mdelay/udelay on a
+   certain cpu. smp_call_function_single is preemptive, so we may deprive cpu
+   time and add extra as much latency as we want to. But do not add too much, or
+   linux watch dog may reboot your machine.
+
+4. Problem
+   This design is not a good design since Intel have many ways to accelerate memory
+   access. HA does not really record all the reads and writes. Besides, there only 2
+   HAs in each socket, while all the cores will access memory through HA, so all the
+   requests are mixed together. Thus, this emulator only works for single-thread
+   processes.

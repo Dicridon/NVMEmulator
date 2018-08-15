@@ -31,3 +31,10 @@ large_hearder.h: This is combination of pcibox.h, pcibox.c, pcicfg.h, pcicfg.c
                  I really DO NOT want this file, but my Makefile is just not
                  correct and I DO NOT know why. So I aggregate all the header
                  files and object files into one to make the Makefile work.
+
+
+NOTICE:
+    This emulator is not completely developed by myself, my supervisor's 
+    student Yizhou Shan developed E5 v3 version, but we failed to port it
+    to E5 v4, so I was asked to developed an E5 v4 version. 
+    Please refer to https://github.com/lastweek/NVM-Emulator
