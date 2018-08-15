@@ -26,3 +26,8 @@ pcibox.c: Implementation of pcibox and relating operations.
 instance.h: Definition of HA box and relating operations.
 
 emulator.c: Implementation of an emulator using functions offered by pcicfg.h
+
+large_hearder.h: This is combination of pcibox.h, pcibox.c, pcicfg.h, pcicfg.c
+                 I really DO NOT want this file, but my Makefile is just not
+                 correct and I DO NOT know why. So I aggregate all the header
+                 files and object files into one to make the Makefile work.
