@@ -1,0 +1,9 @@
+This file describe how I design and implement the NVM emulator
+
+1. Design
+   The emulator consist of only one kernel module which will create a kernel thread
+   polling PMU counter that counts memory access. If the counter has value greater
+   than certain value predefined, the kernel thread would generate an IPI to
+   interrupt the excution of a process on certain CPU (cpu 12 as predefined).
+
+2. Implementation
