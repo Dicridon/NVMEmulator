@@ -1,8 +1,3 @@
-/*
- *    I really need someone to teach me how to break this file into several ones
- *    and rewrite the Makefile to make this module work. The former Makefile
- *    compiles wrong target.
- */
 #include "common.h"
 #include <linux/pci.h>
 
@@ -427,6 +422,7 @@ const event_t HA_event_clock_ticks = {
     .name = "clock ticks",
 };
 
+// Reads
 const event_t HA_event_remote_reads = {
     .event_code = 0x01,
     .umask = 0x02,
@@ -441,9 +437,35 @@ const event_t HA_event_local_reads = {
 
 const event_t HA_event_reads = {
     .event_code = 0x01,
-    .umask = 0x01,
+    .umask = 0x03,
     .name = "reads",
 };
+
+// Writes
+const event_t HA_event_remote_writes = {
+    .event_code = 0x01,
+    .umask = 0x20,
+    .name = "remote writes",
+};
+
+const event_t HA_event_local_writes = {
+    .event_code = 0x01,
+    .umask = 0x10,
+    .name = "local writes",
+};
+
+const event_t HA_event_writes = {
+    .event_code = 0x01,
+    .umask = 0x30,
+    .name = "writes",
+};
+
+const event_t HA_event_remote_access = {
+    .event_code = 0x01,
+    .umask = 0x22,
+    .name = "remote aceess",
+};
+
   
 typedef struct {
     pcicfg_box_t *box;

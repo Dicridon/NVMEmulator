@@ -25,15 +25,7 @@ void delay(void *d) {
     put_cpu();
     printk(KERN_INFO "SMP on cpu %d, access number: %lld\n", cpu, delay_time);
     
-    // if (delay_time >= 20000)
-    //     mdelay(2000);
-    // else if (delay_time >= 10000)
-    //     mdelay(delay_time / 5);
-    // else if (delay_time >= 9000)
-    //     mdelay(delay_time / 2);
-    // else
-    //     mdelay(delay_time);
-    mdelay(delay_time / 2);
+    mdelay(delay_time / 2 + 2000);
 }
 
 int emulator(void* nouse) {
@@ -55,10 +47,10 @@ int emulator(void* nouse) {
     HA_box_reset_ctrs(HA0);
     HA_box_clear_overflow(HA0);
     HA_disable_overflow(HA0, 0);
-    HA_choose_event(HA0, 0, &HA_event_remote_reads);
+    HA_choose_event(HA0, 0, &HA_event_remote_access);
     HA_enable(HA0, 0);        // pair0 in HA0 in socket0 will monitor remote reads
     HA_box_unfreeze(HA0);
-    msleep(100);
+    msleep(10);
 
     while(1) {
         HA_box_freeze(HA0);
