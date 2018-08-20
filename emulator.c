@@ -7,6 +7,7 @@
 #include <linux/smp.h>
 #include <linux/slab.h>
 #include <linux/delay.h>
+#include <linux/string.h>
 
 // #include "instance.h"
 #include "large_header.h"
@@ -15,6 +16,10 @@ MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Dicridon Xiong");
 MODULE_DESCRIPTION("A NVM emulator");
 MODULE_VERSION("0.1");
+
+static char *mode = "wr";
+module_param(mode, charp, 0);
+MODULE_PARM_DESC(mode, "specify an emulating mode: w, r, wr");
 
 struct task_struct *kthread;
 HABox_t *HA0;
@@ -28,9 +33,9 @@ void delay(void *d) {
     mdelay(delay_time / 2 + 2000);
 }
 
-int emulator(void* nouse) {
+int emulator(void* mode) {
     uint64_t counter = 0;
-    uint64_t delay_ns = 100;
+    uint64_t delay_count = 100;
     int cpu = get_cpu();
     int err = 0;
     put_cpu();
@@ -47,7 +52,25 @@ int emulator(void* nouse) {
     HA_box_reset_ctrs(HA0);
     HA_box_clear_overflow(HA0);
     HA_disable_overflow(HA0, 0);
-    HA_choose_event(HA0, 0, &HA_event_remote_access);
+
+    if (strcmp((char*)mode, "wr") == 0) {
+        printk(KERN_INFO "read and write emulation\n");
+        HA_choose_event(HA0, 0, &HA_event_remote_access);        
+    }
+    else if (strcmp((char*)mode, "w") == 0) {
+        printk(KERN_INFO "only write emulation\n");
+        HA_choose_event(HA0, 0, &HA_event_remote_writes);
+    }
+    else if (strcmp((char*)mode, "r") == 0) {
+        printk(KERN_INFO "only read emulation\n");
+        HA_choose_event(HA0, 0, &HA_event_remote_reads);        
+    }
+    else {
+        printk(KERN_INFO "Unknown option, default is wr emulation\n");
+        HA_choose_event(HA0, 0, &HA_event_remote_access);        
+    }
+
+
     HA_enable(HA0, 0);        // pair0 in HA0 in socket0 will monitor remote reads
     HA_box_unfreeze(HA0);
     msleep(10);
@@ -56,9 +79,9 @@ int emulator(void* nouse) {
         HA_box_freeze(HA0);
         HA_read_counter(HA0, 0, &counter);
         if (counter >= 1000) {
-	    delay_ns = counter;
-	    printk(KERN_INFO "delay count is %lld\n", delay_ns);
-            err = smp_call_function_single(12, delay, &delay_ns, 1);
+	    delay_count = counter;
+	    printk(KERN_INFO "delay count is %lld\n", delay_count);
+            err = smp_call_function_single(12, delay, &delay_count, 1);
         }
         // printk(KERN_INFO "REMOTE READS %lld\n", counter);
 	if (err != 0) {
@@ -81,7 +104,14 @@ int emulator(void* nouse) {
 }
 
 static int __init start_emulator(void) {
-    kthread = kthread_create(emulator, NULL, "Emulator");
+    if (strcmp("wr", mode) != 0 && strcmp("r", mode) != 0 && strcmp("w", mode) != 0) {
+        printk(KERN_WARNING "Invalid option %s\n", mode);
+        printk(KERN_INFO "insmod emulator.ko w/r/wr\n");
+        return -1;
+    }
+    
+    kthread = kthread_create(emulator, mode, "Emulator");
+
     if (!kthread) {
         printk(KERN_ERR "kernel thread creation failed\n");
         return -1;
