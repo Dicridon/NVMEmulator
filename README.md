@@ -38,5 +38,5 @@ The emulator project is organized as below
 NOTICE:
     This emulator is not completely developed by myself, my supervisor's 
     student Yizhou Shan developed E5 v3 version, but we failed to port it
-    to E5 v4, so I was asked to developed an E5 v4 version. 
+    to E5 v4, so I was asked to develope an E5 v4 version. 
     Please refer to https://github.com/lastweek/NVM-Emulator
